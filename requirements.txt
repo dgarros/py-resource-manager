@@ -2,3 +2,4 @@ ipaddress
 logging
 pyyaml
 requests
+pytest
