@@ -10,6 +10,7 @@ import requests
 from collections import defaultdict
 
 from resource_manager.pools.ipaddr_subnet import IpAddressPool
+from resource_manager.backend.netbox_utils import query_netbox
 
 logger = logging.getLogger( 'resource-manager' )
 
@@ -23,7 +24,6 @@ class NetboxIpPool(object):
             role: 
             family:
             description:
-
         """
 
         if log.lower() == 'debug':
@@ -105,6 +105,7 @@ class NetboxIpPool(object):
         else: 
             return ip
 
+
     def _get_prefix(self):
 
         logger.debug("_get_prefix(), will query netbox for prefix %s %s" % (self.site_name, self.role) )
@@ -138,41 +139,20 @@ class NetboxIpPool(object):
         
         return True
 
+
     def _get_all_ips_per_prefix(self, prefix):
 
-        offset = 0
-        keep_querying = True
-        netbox_batch_size = 500
-
-        url = self.nb_addr + '/api/ipam/ip-addresses/'
-        
-        results = {
-            'count': 0,
-            'results': []
-        }
-
-        while keep_querying:
-
-            api_url_params = "offset=%s&limit=%s&parent=%s" % (offset, netbox_batch_size, prefix.replace('/', "%2f"))
-
-            resp = self.nb.get(url, 
-                                    params=api_url_params, 
-                                    verify=self.verify_certs )
-
-            resp.raise_for_status()
-
-            resp_dict = resp.json()
-
-            # TODO check for response code
-            results['count'] = resp_dict['count']
-            results['results'].extend(resp_dict['results'])
-
-            offset += netbox_batch_size
-            if int(resp_dict['count']) < offset:
-                keep_querying = False
-
-        return results
     
+        url = self.nb_addr + '/api/ipam/ip-addresses/'  
+        url_params = "parent=%s" % prefix.replace('/', "%2f")
+
+        return query_netbox( req=self.nb,
+                             url=url, 
+                             params=url_params,
+                             secure=self.verify_certs
+                        )
+
+
     def get_prefix(self):
 
         logger.debug("_get_prefix(), will query netbox for prefix %s %s" % (self.site_name, self.role) )
@@ -206,49 +186,20 @@ class NetboxIpPool(object):
         
         return True
 
-    def _get_list_prefix_from_netbox(self, role, site=None, family=4, status=1):
 
-        offset = 0
-        keep_querying = True
-        netbox_batch_size = 500
+    def _get_list_prefix_from_netbox(self, role, site=None, family=4, status=1):
 
         url = self.nb_addr + '/api/ipam/prefixes/'
         
-        logger.debug("_get_list_prefix_from_netbox(), url %s" % (url) )
-        
-        results = {
-            'count': 0,
-            'results': []
-        }
-
-        params = None
+        url_params = None
         if site:
-            params = "site=%s&role=%s&family=%s&status=%s" % (site, role, family, status)
+            url_params = "site=%s&role=%s&family=%s&status=%s" % (site, role, family, status)
         else:
-            params = "role=%s&family=%s&status=%s" % (role, family, status)
+            url_params = "role=%s&family=%s&status=%s" % (role, family, status)
 
-        while keep_querying:
+        return query_netbox( req=self.nb,
+                             url=url, 
+                             params=url_params,
+                             secure=self.verify_certs
+                        )
 
-            paging_params = "offset=%s&limit=%s" % (offset, netbox_batch_size)
-
-            api_url_params = paging_params + '&' + params
-
-            logger.debug("_get_list_prefix_from_netbox(), querying > %s %s" % (url, api_url_params) )    
-
-            resp = self.nb.get(url, 
-                            params=api_url_params, 
-                            verify=self.verify_certs )
-
-            resp.raise_for_status()
-
-            resp_dict = resp.json()
-
-            # TODO check for response code
-            results['count'] = resp_dict['count']
-            results['results'].extend(resp_dict['results'])
-
-            offset += netbox_batch_size
-            if int(resp_dict['count']) < offset:
-                keep_querying = False
-
-        return results
