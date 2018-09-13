@@ -16,7 +16,7 @@ logger = logging.getLogger( 'resource-manager' )
 
 class NetboxIpPool(object):
 
-    def __init__(self, netbox, site, role, family, description=None, log='debug', secure=True):
+    def __init__(self, netbox, site, role, family, description=None, secure=True):
         """
         Inputs:
             netbox: Netbox Server Address http:1.2.3.4:4851
@@ -25,15 +25,6 @@ class NetboxIpPool(object):
             family:
             description:
         """
-
-        if log.lower() == 'debug':
-            logger.setLevel(logging.DEBUG)
-        elif log.lower() == 'warn':
-            logger.setLevel(logging.WARN)
-        elif log.lower() == 'error':
-            logger.setLevel(logging.ERROR)
-        else:
-            logger.setLevel(logging.INFO)
 
         if not secure:
             from requests.packages.urllib3.exceptions import InsecureRequestWarning
