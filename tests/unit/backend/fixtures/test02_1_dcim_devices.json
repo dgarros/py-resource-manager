@@ -1,0 +1,32 @@
+
+{ 
+    "params": "offset=0&limit=500&is_network_device=True&site=test",
+    "response": {
+        "count": 3,
+        "next": null,
+        "previous": null,
+        "results": [
+            {
+                "id": 1,
+                "name": "device1",
+                "custom_fields": {
+                    "ASN": 65001
+                }
+            },
+            {
+                "id": 2,
+                "name": "device2",
+                "custom_fields": {
+                    "ASN": 65002
+                }
+            },
+            {
+                "id": 10,
+                "name": "device10",
+                "custom_fields": {
+                    "ASN": 65010
+                }
+            }
+        ]
+    }
+}

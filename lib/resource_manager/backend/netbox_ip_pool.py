@@ -30,7 +30,6 @@ class NetboxIpPool(object):
             from requests.packages.urllib3.exceptions import InsecureRequestWarning
             requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-        self.nb = netbox
         self.nb = requests.session()
         self.nb_addr = netbox
         self.verify_certs = secure
