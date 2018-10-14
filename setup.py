@@ -38,7 +38,7 @@ params = {
         'Operating System :: OS Independent',
         'Programming Language :: Python',
     ],
-    'keywords': 'pool resource'
+    'keywords': 'pool manager'
 }
 
 setup(**params)
