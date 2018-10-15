@@ -11,7 +11,7 @@ class Test_Validate_Integer_Range(unittest.TestCase):
     def test_init_valid(self):
 
         ipool = IntegerPool("test", start=1, end=10)
-        assert isinstance(ipool, IntegerPool)
+        self.assertIsInstance(ipool, IntegerPool)
 
     def test_init_invalid(self):
 

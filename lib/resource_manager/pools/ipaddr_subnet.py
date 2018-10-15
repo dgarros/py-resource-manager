@@ -7,7 +7,7 @@ class IpAddressPool(object):
     """
     This class manage the ip address allocation in a subnet
     Each IP allocated can be saved with a label to define its identifier
-    If the same ownder request an IP multiple time, the same IP will be returned
+    If the same owner request an IP multiple time, the same IP will be returned
 
     The IPs are store with in a dict with a key that represent the ID of the IP in the subnet
     """

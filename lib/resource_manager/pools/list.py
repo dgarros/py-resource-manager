@@ -16,8 +16,6 @@ def expand_list(int_list):
 
     ints = []
 
-    range_regex = r"\[([0-9\-\,]+)]"
-
     for item in int_list:
 
         range_list = []
