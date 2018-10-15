@@ -48,15 +48,14 @@ class Test_NetboxNetPool(unittest.TestCase):
             json=test03_2["response"],
         )
 
-        pool = NetboxNetPool(
-            netbox="http://mock", role="loopback", family=4
-        )
+        pool = NetboxNetPool(netbox="http://mock", role="loopback", family=4)
 
         self.assertEqual(str(pool.get(size=26)), "10.10.0.64/26")
         self.assertEqual(str(pool.get(size=26, identifier="first")), "10.10.0.0/26")
         self.assertEqual(str(pool.get(size=26, identifier="first")), "10.10.0.0/26")
         self.assertEqual(str(pool.get(size=26, identifier="fourth")), "10.10.0.192/26")
         self.assertEqual(str(pool.get(size=24, identifier="fifth")), "10.10.1.0/24")
+
 
 def load_fixture(name):
 

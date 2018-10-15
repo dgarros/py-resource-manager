@@ -4,6 +4,7 @@ from collections import defaultdict, OrderedDict
 
 logger = logging.getLogger("prefixes")
 
+
 class PrefixesPool(object):
     """
     Class to automatically manage Prefixes and help to carve out sub-prefixes
@@ -27,7 +28,7 @@ class PrefixesPool(object):
         ## Save the top level available subnet
         for subnet in list(self.network.subnets(new_prefix=self.mask_biggest)):
             self.available_subnets[self.mask_biggest].append(str(subnet))
-        
+
     def reserve(self, subnet, identifier=None):
         """
         Indicate that a specific subnet is already reserved/used
@@ -39,9 +40,10 @@ class PrefixesPool(object):
         sub = ipaddress.ip_network(subnet)
 
         if int(sub.prefixlen) <= int(self.network.prefixlen):
-            logger.debug("%s do not have the right size (%s,%s), SKIPPING" % (
-                subnet, sub.prefixlen, self.network.prefixlen
-            ))
+            logger.debug(
+                "%s do not have the right size (%s,%s), SKIPPING"
+                % (subnet, sub.prefixlen, self.network.prefixlen)
+            )
             return False
 
         if sub.supernet(new_prefix=self.network.prefixlen) != self.network:
@@ -51,27 +53,30 @@ class PrefixesPool(object):
         ## Check first if this ID as already done a reservation
         if identifier and identifier in self.sub_by_id.keys():
             if self.sub_by_id[identifier] == str(sub):
-                logger.debug("This identifier (%s) already has an active reservation for %s" %
-                    (identifier, subnet)
+                logger.debug(
+                    "This identifier (%s) already has an active reservation for %s"
+                    % (identifier, subnet)
                 )
                 return True
             else:
-                logger.warn("this identifier (%s) is already used but for a different resource (%s)" % 
-                    (identifier,  self.sub_by_id[identifier])
+                logger.warn(
+                    "this identifier (%s) is already used but for a different resource (%s)"
+                    % (identifier, self.sub_by_id[identifier])
                 )
                 return False
 
         elif identifier and str(sub) in self.sub_by_key.keys():
-            logger.warn("this subnet is already reserved but not with this identifier (%s)" % 
-                    (identifier)
-                )
-            return False 
+            logger.warn(
+                "this subnet is already reserved but not with this identifier (%s)"
+                % (identifier)
+            )
+            return False
 
         elif str(sub) in self.sub_by_key.keys():
             self.remove_subnet_from_available_list(sub)
             return True
 
-        logger.debug("No previous reservation found for (%s)" % subnet) 
+        logger.debug("No previous reservation found for (%s)" % subnet)
 
         ## Check if the subnet itself is available
         ## if available reserve and return
@@ -85,19 +90,21 @@ class PrefixesPool(object):
             self.remove_subnet_from_available_list(sub)
             return True
 
-        logger.debug("the subnet (%s) is not already available, will need to split a bigger one " % str(subnet)) 
+        logger.debug(
+            "the subnet (%s) is not already available, will need to split a bigger one "
+            % str(subnet)
+        )
 
         ## If not reserved already, check if the subnet is available
         ## start at sublen and check all available subnet
         ### increase 1 by 1 until we find the closer supernet available
-        ### break it down and keep track of the other available subnets 
+        ### break it down and keep track of the other available subnets
 
-        for sublen in range(sub.prefixlen-1, self.network.prefixlen, -1):
+        for sublen in range(sub.prefixlen - 1, self.network.prefixlen, -1):
             supernet = sub.supernet(new_prefix=sublen)
             if str(supernet) in self.available_subnets[sublen]:
                 self.split_supernet(supernet, sub)
                 return self.reserve(subnet, identifier=identifier)
-            
 
     def get_subnet(self, size, identifier=None):
         """
@@ -108,8 +115,8 @@ class PrefixesPool(object):
         if identifier and identifier in self.sub_by_id.keys():
             net = ipaddress.ip_network(self.sub_by_id[identifier])
             if net.prefixlen == size:
-                return net 
-            else: 
+                return net
+            else:
                 return False
 
         logger.debug("Nothing found, will allocate a new /%s Subnet" % size)
@@ -121,8 +128,8 @@ class PrefixesPool(object):
         logger.debug("No /%s available, will create one" % size)
         ## if a subnet of this size is not available
         ## we need to find the closest subnet available and split it
-        for i in range(size-1, self.mask_biggest-1, -1):
-            
+        for i in range(size - 1, self.mask_biggest - 1, -1):
+
             if len(self.available_subnets[i]) != 0:
                 supernet = ipaddress.ip_network(self.available_subnets[i][0])
                 logger.debug("%s available, will split it" % str(supernet))
@@ -133,18 +140,17 @@ class PrefixesPool(object):
                 return sub
             else:
                 logger.debug("No /%s available, will continue searching" % i)
-                
+
         # No more subnet available
         return False
 
     def get_nbr_available_subnets(self):
 
         tmp = {}
-        for i in range(self.mask_biggest, self.mask_smallest+1):
+        for i in range(self.mask_biggest, self.mask_smallest + 1):
             tmp[i] = len(self.available_subnets[i])
 
         return tmp
-
 
     def check_if_already_allocated(self, identifier=None):
         """
@@ -161,7 +167,6 @@ class PrefixesPool(object):
         elif identifier and identifier not in self.sub_by_id.keys():
             return False
 
-
     def split_supernet(self, supernet, subnet):
         """
         Split a supernet into smaller networks
@@ -176,7 +181,7 @@ class PrefixesPool(object):
         logger.debug("will create %s out of %s " % (str(subnet), str(supernet)))
 
         parent_net = supernet
-        for i in range(supernet.prefixlen+1, subnet.prefixlen+1):
+        for i in range(supernet.prefixlen + 1, subnet.prefixlen + 1):
 
             tmp_net = list(parent_net.subnets(new_prefix=i))
 
@@ -191,9 +196,11 @@ class PrefixesPool(object):
                 else:
                     parent = 1
                     other = 0
-                
+
                 parent_net = tmp_net[parent]
-                logger.debug("Add %s into list of available subnet" % str(tmp_net[other]))
+                logger.debug(
+                    "Add %s into list of available subnet" % str(tmp_net[other])
+                )
                 self.available_subnets[i].append(str(tmp_net[other]))
 
         self.remove_subnet_from_available_list(supernet)
@@ -211,14 +218,13 @@ class PrefixesPool(object):
 
         try:
             idx = self.available_subnets[subnet.prefixlen].index(str(subnet))
-            
+
             # if idx:
             logger.debug("Subnet %s is not available anymore" % str(subnet))
             del self.available_subnets[subnet.prefixlen][idx]
             return True
         except:
-            logger.warn("Unable to remove %s from list of available subnets" % str(subnet))
+            logger.warn(
+                "Unable to remove %s from list of available subnets" % str(subnet)
+            )
             return False
-
-
-

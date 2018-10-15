@@ -10,20 +10,14 @@ here = path.abspath(path.dirname(__file__))
 
 FIXTURE_DIR = "fixtures/"
 
-VALID_CONFIG_1 = {
-    'netbox': {
-        'address': 'http://mock'
-    }
-}
+VALID_CONFIG_1 = {"netbox": {"address": "http://mock"}}
+
 
 class Test_NetboxNetManager(unittest.TestCase):
-
     def test_init_not_valid(self):
 
         with pytest.raises(Exception) as e_info:
-            NetboxNetManager(
-                config={}, 
-            )
+            NetboxNetManager(config={})
 
     def test_init_valid(self):
         net_manager = NetboxNetManager(config=VALID_CONFIG_1)
@@ -45,11 +39,42 @@ class Test_NetboxNetManager(unittest.TestCase):
 
         nnm = NetboxNetManager(config=VALID_CONFIG_1)
 
-        self.assertEqual(str(nnm.resolve(var_type="NET4", var_params="loopback/26")), "10.10.0.64/26")
-        self.assertEqual(str(nnm.resolve(var_type="NET4", var_params="loopback/26", identifier="first")), "10.10.0.0/26")
-        self.assertEqual(str(nnm.resolve(var_type="NET4", var_params="loopback/26", identifier="first")), "10.10.0.0/26")
-        self.assertEqual(str(nnm.resolve(var_type="NET4", var_params="loopback/26", identifier="fourth")), "10.10.0.192/26")
-        self.assertEqual(str(nnm.resolve(var_type="NET4", var_params="loopback/24", identifier="fifth")), "10.10.1.0/24")
-    
+        self.assertEqual(
+            str(nnm.resolve(var_type="NET4", var_params="loopback/26")), "10.10.0.64/26"
+        )
+        self.assertEqual(
+            str(
+                nnm.resolve(
+                    var_type="NET4", var_params="loopback/26", identifier="first"
+                )
+            ),
+            "10.10.0.0/26",
+        )
+        self.assertEqual(
+            str(
+                nnm.resolve(
+                    var_type="NET4", var_params="loopback/26", identifier="first"
+                )
+            ),
+            "10.10.0.0/26",
+        )
+        self.assertEqual(
+            str(
+                nnm.resolve(
+                    var_type="NET4", var_params="loopback/26", identifier="fourth"
+                )
+            ),
+            "10.10.0.192/26",
+        )
+        self.assertEqual(
+            str(
+                nnm.resolve(
+                    var_type="NET4", var_params="loopback/24", identifier="fifth"
+                )
+            ),
+            "10.10.1.0/24",
+        )
+
+
 def load_fixture(name):
     return yaml.load(open(here + "/" + FIXTURE_DIR + name + ".json"))

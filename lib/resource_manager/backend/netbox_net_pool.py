@@ -38,15 +38,11 @@ class NetboxNetPool(object):
         url = self.nb_addr + "/api/ipam/prefixes/"
 
         params = "role={role}&family={family}&status={status}".format(
-            role=self.role,
-            family=str(self.ip_family),
-            status=str(0),
+            role=self.role, family=str(self.ip_family), status=str(0)
         )
 
         if self.site_name:
-            params += "&site={site}".format(
-                site=self.site_name,
-            )
+            params += "&site={site}".format(site=self.site_name)
 
         resp = query_netbox(
             req=self.nb, url=url, params=params, secure=self.verify_certs
@@ -69,14 +65,11 @@ class NetboxNetPool(object):
             # TODO need to remove te mask_lenght limitation
             url = self.nb_addr + "/api/ipam/prefixes/"
             params = "parent={parent}&family={family}".format(
-                parent=p["prefix"],
-                family=str(self.ip_family)
+                parent=p["prefix"], family=str(self.ip_family)
             )
 
             if self.site_name:
-                params += "&site={site}".format(
-                    site=self.site_name,
-                )
+                params += "&site={site}".format(site=self.site_name)
 
             resp = query_netbox(
                 req=self.nb, url=url, params=params, secure=self.verify_certs
