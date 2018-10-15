@@ -1,6 +1,6 @@
 
 { 
-    "params": "offset=0&limit=500&parent=10.10.0.0/16&family=4&site=test",
+    "params": "offset=0&limit=500&parent=10.10.0.0/16&family=4",
     "response": {
         "count": 1,
         "next": null,
@@ -10,10 +10,7 @@
                 "id": 1,
                 "family": 4,
                 "prefix": "10.10.0.0/26",
-                "site": {
-                    "id": 1,
-                    "slug": "test"
-                },
+                "site": null,
                 "status": {
                     "value": 1,
                     "label": "Active"
@@ -29,10 +26,7 @@
                 "id": 2,
                 "family": 4,
                 "prefix": "10.10.0.128/26",
-                "site": {
-                    "id": 1,
-                    "slug": "test"
-                },
+                "site": null,
                 "status": {
                     "value": 1,
                     "label": "Active"

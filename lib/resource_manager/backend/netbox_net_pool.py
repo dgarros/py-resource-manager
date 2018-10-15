@@ -15,7 +15,7 @@ logger = logging.getLogger("resource-manager")
 
 
 class NetboxNetPool(object):
-    def __init__(self, netbox, site, role, family, size, secure=True):
+    def __init__(self, netbox, role, family, site=None, secure=True):
 
         if not secure:
             from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -28,26 +28,25 @@ class NetboxNetPool(object):
 
         self.site_name = site
         self.role = role
-        self.subnet_size = size
         self.ip_family = family
 
         self.data = None
 
         self.prefixes = []
 
-        self.is_p2p_pool = False
-
-        if size in [4, 6]:
-            self.is_p2p_pool = True
-
         ## Get prefix from netbox based on Site and Role
         url = self.nb_addr + "/api/ipam/prefixes/"
-        params = "site={site}&role={role}&family={family}&status={status}".format(
-            site=self.site_name,
+
+        params = "role={role}&family={family}&status={status}".format(
             role=self.role,
             family=str(self.ip_family),
             status=str(0),
         )
+
+        if self.site_name:
+            params += "&site={site}".format(
+                site=self.site_name,
+            )
 
         resp = query_netbox(
             req=self.nb, url=url, params=params, secure=self.verify_certs
@@ -63,18 +62,21 @@ class NetboxNetPool(object):
 
         ### Save all prefixes
         for p in self.data:
-            prefix = PrefixesPool(p["prefix"], self.subnet_size)
+            prefix = PrefixesPool(p["prefix"])
 
             # Get the list of existing prefix in Netbox
             # And reserve them in the local object
             # TODO need to remove te mask_lenght limitation
             url = self.nb_addr + "/api/ipam/prefixes/"
-            params = "site={site}&parent={parent}&family={family}&mask_length={mask_length}".format(
-                site=self.site_name,
+            params = "parent={parent}&family={family}".format(
                 parent=p["prefix"],
-                family=str(self.ip_family),
-                mask_length=int(self.subnet_size),
+                family=str(self.ip_family)
             )
+
+            if self.site_name:
+                params += "&site={site}".format(
+                    site=self.site_name,
+                )
 
             resp = query_netbox(
                 req=self.nb, url=url, params=params, secure=self.verify_certs
@@ -100,20 +102,20 @@ class NetboxNetPool(object):
 
         return parent_list
 
-    def get_net(self, identifier=None):
+    def get(self, size, identifier=None):
         """
-        reserve a new subnet
+        Reserve a new subnet
         """
 
         ### First check if this identifier already has a subnet assigned
         ### in one of the existing pool
         for prefix in self.prefixes:
             if prefix.check_if_already_allocated(identifier=identifier):
-                return prefix.get_subnet(identifier=identifier)
+                return prefix.get_subnet(size=size, identifier=identifier)
 
         ### If Nothing was found previously, assign a new subnet
         for prefix in self.prefixes:
-            new_prefix = prefix.get_subnet(identifier=identifier)
+            new_prefix = prefix.get_subnet(size=size, identifier=identifier)
             if new_prefix:
                 return new_prefix
 

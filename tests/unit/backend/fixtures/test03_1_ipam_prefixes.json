@@ -1,6 +1,6 @@
 
 { 
-    "params": "offset=0&limit=500&role=loopback&family=4&status=0&site=test",
+    "params": "offset=0&limit=500&role=loopback&family=4&status=0",
     "response": {
         "count": 1,
         "next": null,
@@ -10,10 +10,7 @@
                 "id": 1,
                 "family": 4,
                 "prefix": "10.10.0.0/16",
-                "site": {
-                    "id": 1,
-                    "slug": "test"
-                },
+                "site": null,
                 "status": {
                     "value": 0,
                     "label": "Container"
