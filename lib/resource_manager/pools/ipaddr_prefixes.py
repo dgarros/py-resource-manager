@@ -2,192 +2,155 @@ import ipaddress
 import logging
 from collections import defaultdict, OrderedDict
 
-logger = logging.getLogger( 'prefixes' ) 
+logger = logging.getLogger("prefixes")
+
 
 class PrefixesPool(object):
     """
     Class to automatically manage Prefixes and help to carve out sub-prefixes
     """
 
-    def __init__(self, network, sub_size, carve_only_from=None, log='warn'):
-
-
-        if log.lower() == 'debug':
-            logger.setLevel(logging.DEBUG)
-        elif log.lower() == 'warn':
-            logger.setLevel(logging.WARN)
-        elif log.lower() == 'error':
-            loggersetLevel(logging.ERROR)
-        else:
-            logger.setLevel(logging.INFO)
+    def __init__(self, network, carve_only_from=None):
 
         self.network = ipaddress.ip_network(network)
-        self.sub_size = int(sub_size)
 
-        ## check if sub_size is smaller than network size
-        if self.sub_size <= self.network.prefixlen:
-            raise Exception("The size of the subnets need to be bigger than the size of the network provided")
+        ## Define biggest and smallest possible masks
+        self.mask_biggest = self.network.prefixlen + 1
+        if self.network.version == 4:
+            self.mask_smallest = 32
+        else:
+            self.mask_smallest = 128
 
-        self.size_delta = self.sub_size - self.network.prefixlen
-        self.nbr_subnets = 2 ** self.size_delta
-        self.nbr_subnets_available = self.nbr_subnets
-
+        self.available_subnets = defaultdict(list)
         self.sub_by_key = OrderedDict()
         self.sub_by_id = OrderedDict()
-        self.shard_size = 16
 
-        if self.size_delta <= self.shard_size:
-            self.nbr_shard = 1
-            self.sub_by_key[str(self.network)] = None
-
-        else:
-            self.nbr_shard = 2 ** (self.size_delta - self.shard_size)
-            shard_mask = self.network.prefixlen + self.size_delta - self.shard_size
-
-            ## if the number of shard is too big, we'll only allocate the first 16384
-            ## this is mainly for IPv6 and the probability to use all subnet is extremely small
-            if self.nbr_shard < 16384:
-                for shard in list(self.network.subnets(new_prefix=shard_mask)):
-                    self.sub_by_key[str(shard)] = None
-
-            else:
-                tmp_network_mask = shard_mask -  14
-                tmp_network_addr = "%s/%s" % (str(self.network.network_address), tmp_network_mask)
-                tmp_network = ipaddress.ip_network(tmp_network_addr)
-                for shard in list(tmp_network.subnets(new_prefix=shard_mask)):
-                    self.sub_by_key[str(shard)] = None
-
-
-        logger.debug('Have created %s shard(s)' % self.nbr_shard)
-        logger.debug('Got %s subnets available' % self.nbr_subnets_available)
-
-
-    def _initialize_shard(self, shard_addr):
-        """
-        Initialize a shard 
-        """
-
-        ## Check if the shard is valid and if it has already been initialized
-        if not shard_addr in self.sub_by_key.keys(): 
-            return False
-
-        if self.sub_by_key[shard_addr] != None: 
-            return False
-        
-        logger.debug('Will initialize shard %s' % shard_addr)
-
-        shard = ipaddress.ip_network(shard_addr)
-        subnet_list = list(shard.subnets(new_prefix=int(self.sub_size)))
-
-        self.sub_by_key[shard_addr] = {
-            'nbr_subnet_available': len(subnet_list),
-            'subnets': OrderedDict()
-        }
-
-        # Populate 
-        for sub in subnet_list:
-            self.sub_by_key[shard_addr]['subnets'][str(sub)] = False
-
-        return True
+        ## Save the top level available subnet
+        for subnet in list(self.network.subnets(new_prefix=self.mask_biggest)):
+            self.available_subnets[self.mask_biggest].append(str(subnet))
 
     def reserve(self, subnet, identifier=None):
         """
         Indicate that a specific subnet is already reserved/used
         """
 
-        logger.debug('Will try to reserve > %s (id=%s)' % (subnet, identifier))
-        
+        logger.debug("Will try to reserve > %s (id=%s)" % (subnet, identifier))
+
         ### TODO Add check to make sure the subnet provided has the right size
         sub = ipaddress.ip_network(subnet)
 
-        if sub.prefixlen != self.sub_size:  
-            logger.debug('%s do not have the right size, SKIPPING' % (subnet))
-            return False    
-        
-        if not self.network.overlaps(sub):  
-            logger.debug('%s is not part of this network, SKIPPING' % (subnet))
+        if int(sub.prefixlen) <= int(self.network.prefixlen):
+            logger.debug(
+                "%s do not have the right size (%s,%s), SKIPPING"
+                % (subnet, sub.prefixlen, self.network.prefixlen)
+            )
             return False
-        
-        # TODO check earlier if identifier already has reserved something
 
-        logger.debug('Shard list > %s' % (self.sub_by_key.keys()))
+        if sub.supernet(new_prefix=self.network.prefixlen) != self.network:
+            logger.debug("%s is not part of this network, SKIPPING" % (subnet))
+            return False
 
-        ## Find the shard for this subnet
-        for shard in self.sub_by_key.keys():
-            shardnet = ipaddress.ip_network(shard)
-            if not shardnet.overlaps(sub):
-                logger.debug('%s is not part of this shard' % (subnet))
-                continue
+        ## Check first if this ID as already done a reservation
+        if identifier and identifier in self.sub_by_id.keys():
+            if self.sub_by_id[identifier] == str(sub):
+                logger.debug(
+                    "This identifier (%s) already has an active reservation for %s"
+                    % (identifier, subnet)
+                )
+                return True
+            else:
+                logger.warn(
+                    "this identifier (%s) is already used but for a different resource (%s)"
+                    % (identifier, self.sub_by_id[identifier])
+                )
+                return False
 
-            if self.sub_by_key[shard] == None:
-                self._initialize_shard(shard)
+        elif identifier and str(sub) in self.sub_by_key.keys():
+            logger.warn(
+                "this subnet is already reserved but not with this identifier (%s)"
+                % (identifier)
+            )
+            return False
 
-            if str(sub) not in self.sub_by_key[shard]['subnets'].keys():
-                raise Exception("improbable situation, shard has not been initialized properly")    
-            
-            if self.sub_by_key[shard]['subnets'][str(sub)] != False:
-                if identifier and identifier == self.sub_by_key[shard]['subnets'][str(sub)]:
-                    logger.debug('%s already reserved with id > %s' % (subnet, identifier))
-                    return True
-                elif identifier and identifier != self.sub_by_key[shard]['subnets'][str(sub)]:
-                    current_id = self.sub_by_key[shard]['subnets'][str(sub)]
-                    logger.debug('%s already reserved with a different id > %s' % (subnet, current_id))
-                    return False
-
-            elif identifier:
-                self.sub_by_key[shard]['subnets'][str(sub)] = identifier
-                self.sub_by_id[identifier] = str(sub)
-
-                self.sub_by_key[shard]['nbr_subnet_available'] -= 1
-                logger.debug('%s reserved with identifier > %s' % (subnet, identifier))
-            
-            else: 
-                self.sub_by_key[shard]['subnets'][str(sub)] = True
-                self.sub_by_key[shard]['nbr_subnet_available'] -= 1
-                logger.debug('%s reserved without identifier' % (subnet))
-            
-
+        elif str(sub) in self.sub_by_key.keys():
+            self.remove_subnet_from_available_list(sub)
             return True
-                
-        # Couldn't find the subnet
-        return False
 
+        logger.debug("No previous reservation found for (%s)" % subnet)
 
-    def get_subnet(self, identifier=None):
+        ## Check if the subnet itself is available
+        ## if available reserve and return
+        if subnet in self.available_subnets[sub.prefixlen]:
+            if identifier:
+                self.sub_by_id[identifier] = subnet
+                self.sub_by_key[subnet] = identifier
+            else:
+                self.sub_by_key[subnet] = None
+
+            self.remove_subnet_from_available_list(sub)
+            return True
+
+        logger.debug(
+            "the subnet (%s) is not already available, will need to split a bigger one "
+            % str(subnet)
+        )
+
+        ## If not reserved already, check if the subnet is available
+        ## start at sublen and check all available subnet
+        ### increase 1 by 1 until we find the closer supernet available
+        ### break it down and keep track of the other available subnets
+
+        for sublen in range(sub.prefixlen - 1, self.network.prefixlen, -1):
+            supernet = sub.supernet(new_prefix=sublen)
+            if str(supernet) in self.available_subnets[sublen]:
+                self.split_supernet(supernet, sub)
+                return self.reserve(subnet, identifier=identifier)
+
+    def get_subnet(self, size, identifier=None):
         """
         Return the next available Subnet
-
         Return a IpNetwork Object
         """
-        
+
         if identifier and identifier in self.sub_by_id.keys():
-                return ipaddress.ip_network(self.sub_by_id[identifier])
+            net = ipaddress.ip_network(self.sub_by_id[identifier])
+            if net.prefixlen == size:
+                return net
+            else:
+                return False
 
-        for i, (key, shard) in enumerate(self.sub_by_key.items()):
+        logger.debug("Nothing found, will allocate a new /%s Subnet" % size)
+        if len(self.available_subnets[size]) != 0:
+            sub = self.available_subnets[size][0]
+            self.reserve(subnet=sub, identifier=identifier)
+            return ipaddress.ip_network(sub)
 
-            if shard == None:
-                self._initialize_shard(key)
+        logger.debug("No /%s available, will create one" % size)
+        ## if a subnet of this size is not available
+        ## we need to find the closest subnet available and split it
+        for i in range(size - 1, self.mask_biggest - 1, -1):
 
-            if self.sub_by_key[key]['nbr_subnet_available'] == 0:
-                continue
-
-            for sub in self.sub_by_key[key]['subnets'].keys():
-                if self.sub_by_key[key]['subnets'][sub] != False:
-                    continue
-
-                if identifier:
-                    self.sub_by_key[key]['subnets'][sub] = identifier
-                    self.sub_by_id[identifier] = sub
-                    self.sub_by_key[key]['nbr_subnet_available'] -= 1
-                
-                else:
-                    self.sub_by_key[key]['subnets'][sub] = True
-                    self.sub_by_key[key]['nbr_subnet_available'] -= 1
-
-                return ipaddress.ip_network(sub)
+            if len(self.available_subnets[i]) != 0:
+                supernet = ipaddress.ip_network(self.available_subnets[i][0])
+                logger.debug("%s available, will split it" % str(supernet))
+                subs = supernet.subnets(new_prefix=size)
+                sub = next(subs)
+                self.split_supernet(supernet, sub)
+                self.reserve(subnet=str(sub), identifier=identifier)
+                return sub
+            else:
+                logger.debug("No /%s available, will continue searching" % i)
 
         # No more subnet available
         return False
+
+    def get_nbr_available_subnets(self):
+
+        tmp = {}
+        for i in range(self.mask_biggest, self.mask_smallest + 1):
+            tmp[i] = len(self.available_subnets[i])
+
+        return tmp
 
     def check_if_already_allocated(self, identifier=None):
         """
@@ -204,4 +167,64 @@ class PrefixesPool(object):
         elif identifier and identifier not in self.sub_by_id.keys():
             return False
 
+    def split_supernet(self, supernet, subnet):
+        """
+        Split a supernet into smaller networks
+
+        args
+            supernet (ipnetwork)
+            subnet (ipnetwork)
+        """
+
+        ### TODO ensure subnet is small than supernet
+        ### TODO ensure that subnet is part of supernet
+        logger.debug("will create %s out of %s " % (str(subnet), str(supernet)))
+
+        parent_net = supernet
+        for i in range(supernet.prefixlen + 1, subnet.prefixlen + 1):
+
+            tmp_net = list(parent_net.subnets(new_prefix=i))
+
+            if i == subnet.prefixlen:
+                for net in tmp_net:
+                    logger.debug("Add %s into list of available subnet" % str(net))
+                    self.available_subnets[i].append(str(net))
+            else:
+                if subnet.subnet_of(tmp_net[0]):
+                    parent = 0
+                    other = 1
+                else:
+                    parent = 1
+                    other = 0
+
+                parent_net = tmp_net[parent]
+                logger.debug(
+                    "Add %s into list of available subnet" % str(tmp_net[other])
+                )
+                self.available_subnets[i].append(str(tmp_net[other]))
+
+        self.remove_subnet_from_available_list(supernet)
+        return True
+
+    def remove_subnet_from_available_list(self, subnet):
+        """
+        Remove a subnet from the list of available Subnet
         
+        args:
+            subnet (ipnetwork)
+        """
+
+        ## todo check if subnet is an IP network object
+
+        try:
+            idx = self.available_subnets[subnet.prefixlen].index(str(subnet))
+
+            # if idx:
+            logger.debug("Subnet %s is not available anymore" % str(subnet))
+            del self.available_subnets[subnet.prefixlen][idx]
+            return True
+        except:
+            logger.warn(
+                "Unable to remove %s from list of available subnets" % str(subnet)
+            )
+            return False

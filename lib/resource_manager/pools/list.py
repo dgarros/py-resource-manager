@@ -1,4 +1,3 @@
-
 import re
 import logging
 import os
@@ -17,8 +16,6 @@ def expand_list(int_list):
 
     ints = []
 
-    range_regex = r'\[([0-9\-\,]+)]'
-
     for item in int_list:
 
         range_list = []
@@ -27,11 +24,11 @@ def expand_list(int_list):
         try:
             # Try if there is a range in the interface name
             # if there is one, expand the range to a list of integer
-            range_str = re.search(r'\[([0-9\-\,]+)\]', item).group(1)
+            range_str = re.search(r"\[([0-9\-\,]+)\]", item).group(1)
             range_list = expand_range(range_str)
 
             # extract the substring before and after the range
-            sub_int = re.split(r'\[[0-9\-\,]+\]', item, 1)
+            sub_int = re.split(r"\[[0-9\-\,]+\]", item, 1)
 
         except AttributeError:
             pass
@@ -41,10 +38,10 @@ def expand_list(int_list):
             ints.append(item)
         else:
             for i in range_list:
-                new_int = "%s%s%s" % (sub_int[0],i,sub_int[1])
-                new_int_list = expand_list([ new_int ])
+                new_int = "%s%s%s" % (sub_int[0], i, sub_int[1])
+                new_int_list = expand_list([new_int])
                 ints.extend(new_int_list)
-            
+
     return ints
 
 
@@ -62,11 +59,20 @@ def expand_range(str_range):
     0-1,3-6 > [0,1,3,4,5,6]
     0-1,6,7,10 > [0,1,6,7,10]
     """
-    out = sum(((list(range(*[int(j) + k for k,j in enumerate(i.split('-'))]))
-         if '-' in i else [int(i)]) for i in str_range.split(',')), [])
+    out = sum(
+        (
+            (
+                list(range(*[int(j) + k for k, j in enumerate(i.split("-"))]))
+                if "-" in i
+                else [int(i)]
+            )
+            for i in str_range.split(",")
+        ),
+        [],
+    )
 
     return out
-    
+
 
 ### -------------------------------------------------------
 ### Main Class
@@ -75,7 +81,7 @@ def expand_range(str_range):
 
 #     def __init__(self, netbox, name, log='debug'):
 
-#         # Get 
+#         # Get
 #         self.nb = netbox
 #         self.name = name
 #         self.data = None
@@ -90,7 +96,7 @@ def expand_range(str_range):
 #         resp, ok = self.nb.request.dcim.dcim_devices_list(name=self.name)
 #         if not ok:
 #             raise Exception("An issue happened while trying to get device %s in netbox" % self.name)
-#         elif resp['count'] == 0: 
+#         elif resp['count'] == 0:
 #             raise Exception("Unable to find %s in netbox" % self.name)
 
 #         self.data = resp['results'][0]
@@ -105,8 +111,8 @@ def expand_range(str_range):
 #         elif log.lower() == 'error':
 #             self.log.setLevel(logging.ERROR)
 #         else:
-#             self.log.setLevel(logging.INFO)   
-        
+#             self.log.setLevel(logging.INFO)
+
 #         ## Load the spec file
 #         int_spec = yaml.load(open(SPECS_DIR + "interface_pool.yaml"))
 #         self.log.debug('Opening Spec file {}'.format(SPEC_FILE))
@@ -134,14 +140,14 @@ def expand_range(str_range):
 
 #         else:
 #             raise Exception("Unable to find an interface pool profile for %s" % self.name)
- 
+
 
 #         ### Expand Spec list
 #         for group in self.int_spec.keys():
 
-#             if group == 'type': 
+#             if group == 'type':
 #                 continue
-                
+
 #             expanded_list = expand_int_list(self.int_spec[group])
 #             self.int_spec[group] = expanded_list
 #             self.log.debug('Found %s interfaces for %s' % (len(expanded_list), group))
@@ -165,7 +171,7 @@ def expand_range(str_range):
 
 #                         self.int_by_name[int['name']]['used'] = peer
 #                         self.int_by_owner[peer] = int['name']
-                    
+
 #         elif self.int_type == 'console':
 #             resp, ok = self.nb.request.dcim.dcim_console_server_ports_list(device=self.name, limit=250)
 
@@ -176,7 +182,7 @@ def expand_range(str_range):
 #                 if int['connected_console']:
 
 #                     peer_port, ok = self.nb.request.dcim.dcim_console_ports_read(id=int['connected_console'])
-                    
+
 #                     if not ok:
 #                         self.int_by_name[int['name']]['used'] = True
 
@@ -185,8 +191,8 @@ def expand_range(str_range):
 
 #                         self.int_by_name[int['name']]['used'] = peer
 #                         self.int_by_owner[peer] = int['name']
-                    
-                    
+
+
 #         elif self.int_type == 'power':
 #             resp, ok = self.nb.request.dcim.dcim_power_outlets_list(device=self.name, limit=250)
 
@@ -196,9 +202,9 @@ def expand_range(str_range):
 
 #                 if int['connected_port']:
 #                     self.int_by_name[int['name']]['used'] = True
-                    
+
 #                     peer_port, ok = self.nb.request.dcim.dcim_power_ports_read(id=int['connected_console'])
-                    
+
 #                     if not ok:
 #                         self.int_by_name[int['name']]['used'] = True
 
@@ -207,7 +213,7 @@ def expand_range(str_range):
 
 #                         self.int_by_name[int['name']]['used'] = peer
 #                         self.int_by_owner[peer] = int['name']
-                    
+
 #         else:
 #             self.log.warn('%s is not a valid interface type' % self.int_type)
 
@@ -225,7 +231,7 @@ def expand_range(str_range):
 #             return False
 
 #         if int_id:
-            
+
 #             if int(int_id) > len(self.int_spec[group]):
 #                 self.log.debug('Trying to access an interface by id outside of the pool > %s > %s' % (group, int_id))
 #                 return False
@@ -243,15 +249,15 @@ def expand_range(str_range):
 #                 self.int_by_owner[owner] = intf
 #             else:
 #                 self.int_by_name[intf]['used'] = True
-            
+
 #             return intf
 
 
 #         if device and interface:
-                
+
 #             owner = "%s::%s" % (device, interface)
 #             self.log.debug('Will check if there is already an interface allocated for this owner > %s' % (owner))
-               
+
 #             if owner in self.int_by_owner.keys():
 #                 self.log.debug('There is already an interface for this owner > %s > %s' % (owner, self.int_by_owner[owner]))
 #                 if self.int_by_owner[owner] in self.int_spec[group]:
@@ -261,11 +267,11 @@ def expand_range(str_range):
 #                     return False
 
 #             self.log.debug('will get a new interface for %s ' % owner)
-                
+
 #         for intf in self.int_spec[group]:
 #             if intf not in self.int_by_name.keys():
 #                 continue
-            
+
 #             if self.int_by_name[intf]['used'] != False:
 #                 continue
 
@@ -276,13 +282,12 @@ def expand_range(str_range):
 
 #             else:
 #                 self.int_by_name[intf]['used'] = True
-            
+
 #             return intf
 
 
 class ListPool(object):
-
-    def __init__(self, name, items_list, log='debug'):
+    def __init__(self, name, items_list, log="debug"):
 
         self.name = name
         self.item_by_value = OrderedDict()
@@ -297,14 +302,11 @@ class ListPool(object):
 
         self.nbr_item_available = self.nbr_item
 
-
     def get_nbr_available(self):
         return self.nbr_item_available
 
-
     def get_list_size(self):
         return self.nbr_item
-
 
     def reserve(self, item, identifier=None):
         """
@@ -318,7 +320,7 @@ class ListPool(object):
 
         # If item is already reserved, check the identifier
         if self.item_by_value[item] != False:
-            if self.item_by_value[item] == identifier:   
+            if self.item_by_value[item] == identifier:
                 return True
 
             # item already reserved by someone else
@@ -334,7 +336,6 @@ class ListPool(object):
             self.item_by_value[item] = True
             self.nbr_item_available -= 1
             return True
-            
 
     def get(self, identifier=None):
         """
@@ -342,13 +343,13 @@ class ListPool(object):
         Return the next available one by default, 
           except if an identifier is provided and there is already an item associated with this id
         """
-        
+
         if identifier:
             if identifier in self.item_by_identifier.keys():
                 return self.item_by_identifier[identifier]
 
         for item in self.item_by_value.keys():
-            
+
             if self.item_by_value[item] != False:
                 continue
 
@@ -363,4 +364,3 @@ class ListPool(object):
                 self.item_by_value[item] = True
                 self.nbr_item_available -= 1
                 return item
-

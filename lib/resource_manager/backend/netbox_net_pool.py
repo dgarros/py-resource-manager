@@ -1,4 +1,3 @@
-
 import logging
 import re
 import yaml
@@ -12,88 +11,79 @@ from resource_manager.pools.ipaddr_prefixes import PrefixesPool
 
 from resource_manager.backend.netbox_utils import query_netbox
 
-logger = logging.getLogger( 'resource-manager' )
+logger = logging.getLogger("resource-manager")
+
 
 class NetboxNetPool(object):
-
-    def __init__(self, netbox, site, role, family, size, secure=True):
+    def __init__(self, netbox, role, family, site=None, secure=True):
 
         if not secure:
             from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
             requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
         self.nb = requests.session()
         self.nb_addr = netbox
         self.verify_certs = secure
 
-
         self.site_name = site
         self.role = role
-        self.subnet_size = size
         self.ip_family = family
 
         self.data = None
 
         self.prefixes = []
 
-        self.is_p2p_pool = False
-
-        if size in [4, 6]:
-            self.is_p2p_pool = True
-
         ## Get prefix from netbox based on Site and Role
-        url = self.nb_addr + '/api/ipam/prefixes/'
-        params = "site={site}&role={role}&family={family}&status={status}".format(
-                                            site=self.site_name,
-                                            role=self.role,
-                                            family=str(self.ip_family),
-                                            status=str(0)
-                                        )
+        url = self.nb_addr + "/api/ipam/prefixes/"
 
-        resp =  query_netbox(req=self.nb, 
-                             url=url,
-                             params=params,
-                             secure=self.verify_certs
-                        )
+        params = "role={role}&family={family}&status={status}".format(
+            role=self.role, family=str(self.ip_family), status=str(0)
+        )
 
-        if resp['count'] == 0: 
-            raise Exception("Unable to find the prefixe %s (v%s) for %s in netbox" % (self.role, self.ip_family, self.site_name))
+        if self.site_name:
+            params += "&site={site}".format(site=self.site_name)
 
-        self.data = resp['results']
+        resp = query_netbox(
+            req=self.nb, url=url, params=params, secure=self.verify_certs
+        )
+
+        if resp["count"] == 0:
+            raise Exception(
+                "Unable to find the prefixe %s (v%s) for %s in netbox"
+                % (self.role, self.ip_family, self.site_name)
+            )
+
+        self.data = resp["results"]
 
         ### Save all prefixes
         for p in self.data:
-            prefix = PrefixesPool( p['prefix'], self.subnet_size)
+            prefix = PrefixesPool(p["prefix"])
 
-        
             # Get the list of existing prefix in Netbox
             # And reserve them in the local object
-            # TODO need to remove te mask_lenght limitation 
-            url = self.nb_addr + '/api/ipam/prefixes/'
-            params = "site={site}&parent={parent}&family={family}&mask_length={mask_length}".format(
-                                            site=self.site_name,
-                                            parent=p['prefix'],
-                                            family=str(self.ip_family),
-                                            mask_length=int(self.subnet_size)
-                                        )
+            # TODO need to remove te mask_lenght limitation
+            url = self.nb_addr + "/api/ipam/prefixes/"
+            params = "parent={parent}&family={family}".format(
+                parent=p["prefix"], family=str(self.ip_family)
+            )
 
-            resp =  query_netbox(req=self.nb, 
-                                 url=url,
-                                 params=params,
-                                 secure=self.verify_certs
-                            )
+            if self.site_name:
+                params += "&site={site}".format(site=self.site_name)
 
+            resp = query_netbox(
+                req=self.nb, url=url, params=params, secure=self.verify_certs
+            )
 
-            logger.debug("Found %s prefixes in Netbox" % len(resp['results']) ) 
+            logger.debug("Found %s prefixes in Netbox" % len(resp["results"]))
 
-            for net in resp['results']:
-                if net['description']:
-                    prefix.reserve(net['prefix'], identifier=net['description'])
-                else: 
-                    prefix.reserve(net['prefix'])
-         
-            self.prefixes.append( prefix )
+            for net in resp["results"]:
+                if net["description"]:
+                    prefix.reserve(net["prefix"], identifier=net["description"])
+                else:
+                    prefix.reserve(net["prefix"])
 
+            self.prefixes.append(prefix)
 
     def get_parent_prefixes(self):
         """
@@ -105,27 +95,25 @@ class NetboxNetPool(object):
 
         return parent_list
 
-
-    def get_net(self, identifier=None):
+    def get(self, size, identifier=None):
         """
-        reserve a new subnet
+        Reserve a new subnet
         """
 
         ### First check if this identifier already has a subnet assigned
         ### in one of the existing pool
         for prefix in self.prefixes:
             if prefix.check_if_already_allocated(identifier=identifier):
-                return prefix.get_subnet(identifier=identifier)
+                return prefix.get_subnet(size=size, identifier=identifier)
 
         ### If Nothing was found previously, assign a new subnet
         for prefix in self.prefixes:
-            new_prefix = prefix.get_subnet(identifier=identifier)
+            new_prefix = prefix.get_subnet(size=size, identifier=identifier)
             if new_prefix:
                 return new_prefix
 
         ### if nothing has been assigned and returned before, no more subnet are available
         return False
-
 
     ## This function propably should not live here
 
@@ -142,7 +130,7 @@ class NetboxNetPool(object):
     #         label = "%s::%s" % (device, interface)
 
     #     elif device and interface and self.is_p2p_pool:
-            
+
     #         peers = []
     #         peers.append("%s::%s" % (device, interface))
     #         ints, ok = self.nb.request.dcim.dcim_interfaces_list(device=device, name=interface )
@@ -154,7 +142,7 @@ class NetboxNetPool(object):
     #                 if isinstance(int['interface_connection'], dict):
     #                     peer_int = int['interface_connection']['interface']['name']
     #                     peer_dev = int['interface_connection']['interface']['device']['name']
-                    
+
     #                     peers.append("%s::%s" % (peer_dev, peer_int))
     #                     label = "<>".join(sorted(peers))
     #             else:
@@ -173,10 +161,5 @@ class NetboxNetPool(object):
 
     #     logger.debug("Got subnet for label > %s > %s" % ( label, str(subnet)))
 
-    #     ### TODO should we store the subnet somewhere to reuse it later ?? 
+    #     ### TODO should we store the subnet somewhere to reuse it later ??
     #     return "%s/%s" % (subnet[ipid], subnet.prefixlen)
-
-
-
-        
-        
