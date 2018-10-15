@@ -15,7 +15,7 @@ __author__ = "Damien Garros <dgarros@gmail.com>"
 requirements_data = parse_requirements("requirements.txt", session=uuid.uuid1())
 requirements = [str(package.req) for package in requirements_data]
 
-version = "0.0.1"
+version = "0.0.2"
 long_description = "Resource Manager Library"
 
 params = {
@@ -23,7 +23,7 @@ params = {
     "version": version,
     "package_dir": {"": "lib"},
     "packages": ["resource_manager"],
-    "url": "https://github.com/xxx",
+    "url": "https://github.com/dgarros/py-resource-manager",
     "license": "Apache License, Version 2.0",
     "author": "Damien Garros",
     "author_email": "dgarros@gmail.com",
