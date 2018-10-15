@@ -1,6 +1,5 @@
 ipaddress
 pyyaml
 requests
-logging
 pytest
 requests_mock
