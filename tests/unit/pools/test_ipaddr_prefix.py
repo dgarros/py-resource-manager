@@ -95,44 +95,44 @@ class Test_Validate_Get_Subnet(unittest.TestCase):
     def test_v4_no_owner(self):
         sub = PrefixesPool("192.168.0.0/16")
 
-        self.assertEqual(str(sub.get_subnet(size=24)), "192.168.0.0/24")
-        self.assertEqual(str(sub.get_subnet(size=25)), "192.168.1.0/25")
-        self.assertEqual(str(sub.get_subnet(size=17)), "192.168.128.0/17")
-        self.assertEqual(str(sub.get_subnet(size=24)), "192.168.2.0/24")
-        self.assertEqual(str(sub.get_subnet(size=25)), "192.168.1.128/25")
+        self.assertEqual(str(sub.get(size=24)), "192.168.0.0/24")
+        self.assertEqual(str(sub.get(size=25)), "192.168.1.0/25")
+        self.assertEqual(str(sub.get(size=17)), "192.168.128.0/17")
+        self.assertEqual(str(sub.get(size=24)), "192.168.2.0/24")
+        self.assertEqual(str(sub.get(size=25)), "192.168.1.128/25")
 
     def test_v4_with_owner(self):
         sub = PrefixesPool("192.168.0.0/16")
 
         self.assertEqual(
-            str(sub.get_subnet(size=24, identifier="first")), "192.168.0.0/24"
+            str(sub.get(size=24, identifier="first")), "192.168.0.0/24"
         )
         self.assertEqual(
-            str(sub.get_subnet(size=25, identifier="second")), "192.168.1.0/25"
+            str(sub.get(size=25, identifier="second")), "192.168.1.0/25"
         )
         self.assertEqual(
-            str(sub.get_subnet(size=17, identifier="third")), "192.168.128.0/17"
+            str(sub.get(size=17, identifier="third")), "192.168.128.0/17"
         )
         self.assertEqual(
-            str(sub.get_subnet(size=25, identifier="second")), "192.168.1.0/25"
+            str(sub.get(size=25, identifier="second")), "192.168.1.0/25"
         )
         self.assertEqual(
-            str(sub.get_subnet(size=17, identifier="third")), "192.168.128.0/17"
+            str(sub.get(size=17, identifier="third")), "192.168.128.0/17"
         )
 
     def test_no_more_subnet(self):
         sub = PrefixesPool("192.0.0.0/22")
 
-        self.assertEqual(str(sub.get_subnet(size=24)), "192.0.0.0/24")
-        self.assertEqual(str(sub.get_subnet(size=24)), "192.0.1.0/24")
-        self.assertEqual(str(sub.get_subnet(size=24)), "192.0.2.0/24")
-        self.assertEqual(str(sub.get_subnet(size=24)), "192.0.3.0/24")
-        self.assertEqual(sub.get_subnet(size=24), False)
+        self.assertEqual(str(sub.get(size=24)), "192.0.0.0/24")
+        self.assertEqual(str(sub.get(size=24)), "192.0.1.0/24")
+        self.assertEqual(str(sub.get(size=24)), "192.0.2.0/24")
+        self.assertEqual(str(sub.get(size=24)), "192.0.3.0/24")
+        self.assertEqual(sub.get(size=24), False)
 
     @pytest.mark.long
     def test_v6_no_owner(self):
         sub = PrefixesPool("2620:135:6000:fffe::/64")
-        self.assertEqual(str(sub.get_subnet(size=127)), "2620:135:6000:fffe::/127")
+        self.assertEqual(str(sub.get(size=127)), "2620:135:6000:fffe::/127")
 
 
 class Test_Validate_Check_if_Already_Reserved(unittest.TestCase):
@@ -140,10 +140,10 @@ class Test_Validate_Check_if_Already_Reserved(unittest.TestCase):
         sub = PrefixesPool("192.168.0.0/16")
 
         self.assertEqual(
-            str(sub.get_subnet(size=24, identifier="first")), "192.168.0.0/24"
+            str(sub.get(size=24, identifier="first")), "192.168.0.0/24"
         )
         self.assertEqual(
-            str(sub.get_subnet(size=24, identifier="second")), "192.168.1.0/24"
+            str(sub.get(size=24, identifier="second")), "192.168.1.0/24"
         )
 
         self.assertTrue(sub.check_if_already_allocated(identifier="second"))
@@ -155,7 +155,7 @@ class Test_Validate_Reserve(unittest.TestCase):
         sub = PrefixesPool("192.168.0.0/16")
 
         self.assertEqual(sub.reserve("192.168.0.0/24"), True)
-        self.assertEqual(str(sub.get_subnet(size=24)), "192.168.1.0/24")
+        self.assertEqual(str(sub.get(size=24)), "192.168.1.0/24")
 
     def test_wrong_input(self):
         sub = PrefixesPool("192.168.0.0/16")
@@ -169,7 +169,7 @@ class Test_Validate_Reserve(unittest.TestCase):
         self.assertEqual(sub.reserve("192.192.0.0/24", identifier="first"), True)
         self.assertEqual(sub.reserve("192.192.1.0/24", identifier="second"), True)
 
-        self.assertEqual(str(sub.get_subnet(size=24)), "192.192.2.0/24")
+        self.assertEqual(str(sub.get(size=24)), "192.192.2.0/24")
 
 
 # # Test negative cases:

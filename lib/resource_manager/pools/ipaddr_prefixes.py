@@ -10,7 +10,7 @@ class PrefixesPool(object):
     Class to automatically manage Prefixes and help to carve out sub-prefixes
     """
 
-    def __init__(self, network, carve_only_from=None):
+    def __init__(self, network):
 
         self.network = ipaddress.ip_network(network)
 
@@ -106,34 +106,36 @@ class PrefixesPool(object):
                 self.split_supernet(supernet, sub)
                 return self.reserve(subnet, identifier=identifier)
 
-    def get_subnet(self, size, identifier=None):
+    def get(self, size, identifier=None):
         """
         Return the next available Subnet
         Return a IpNetwork Object
         """
 
+        clean_size = int(size)
+
         if identifier and identifier in self.sub_by_id.keys():
             net = ipaddress.ip_network(self.sub_by_id[identifier])
-            if net.prefixlen == size:
+            if net.prefixlen == clean_size:
                 return net
             else:
                 return False
 
-        logger.debug("Nothing found, will allocate a new /%s Subnet" % size)
-        if len(self.available_subnets[size]) != 0:
-            sub = self.available_subnets[size][0]
+        logger.debug("Nothing found, will allocate a new /%s Subnet" % clean_size)
+        if len(self.available_subnets[clean_size]) != 0:
+            sub = self.available_subnets[clean_size][0]
             self.reserve(subnet=sub, identifier=identifier)
             return ipaddress.ip_network(sub)
 
-        logger.debug("No /%s available, will create one" % size)
+        logger.debug("No /%s available, will create one" % clean_size)
         ## if a subnet of this size is not available
         ## we need to find the closest subnet available and split it
-        for i in range(size - 1, self.mask_biggest - 1, -1):
+        for i in range(clean_size - 1, self.mask_biggest - 1, -1):
 
             if len(self.available_subnets[i]) != 0:
                 supernet = ipaddress.ip_network(self.available_subnets[i][0])
                 logger.debug("%s available, will split it" % str(supernet))
-                subs = supernet.subnets(new_prefix=size)
+                subs = supernet.subnets(new_prefix=clean_size)
                 sub = next(subs)
                 self.split_supernet(supernet, sub)
                 self.reserve(subnet=str(sub), identifier=identifier)
