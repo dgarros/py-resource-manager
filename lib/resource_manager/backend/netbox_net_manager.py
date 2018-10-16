@@ -18,6 +18,12 @@ class NetboxNetManager(object):
 
         self.netbox_addr = config["netbox"]["address"]
 
+        if "secure" in config["netbox"]:
+            self.netbox_secure = config["netbox"]["secure"]
+        else:
+            self.netbox_secure = True
+
+
     def supported_types(self):
         return self.__supported_types
 
@@ -50,6 +56,7 @@ class NetboxNetManager(object):
                     role=params["role"],
                     site=params["site"],
                     family=params["family"],
+                    secure=self.netbox_secure
                 )
 
             except Exception as err:
