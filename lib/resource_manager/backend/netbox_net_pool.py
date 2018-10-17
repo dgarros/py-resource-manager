@@ -104,11 +104,11 @@ class NetboxNetPool(object):
         ### in one of the existing pool
         for prefix in self.prefixes:
             if prefix.check_if_already_allocated(identifier=identifier):
-                return prefix.get_subnet(size=size, identifier=identifier)
+                return prefix.get(size=size, identifier=identifier)
 
         ### If Nothing was found previously, assign a new subnet
         for prefix in self.prefixes:
-            new_prefix = prefix.get_subnet(size=size, identifier=identifier)
+            new_prefix = prefix.get(size=size, identifier=identifier)
             if new_prefix:
                 return new_prefix
 

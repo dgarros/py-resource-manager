@@ -17,6 +17,12 @@ class NetboxAsnManager(object):
                 raise Exception("Configuration must have a %s section" % section)
 
         self.netbox_addr = config["netbox"]["address"]
+
+        if "secure" in config["netbox"]:
+            self.netbox_secure = config["netbox"]["secure"]
+        else:
+            self.netbox_secure = True
+
         self.netbox_custom_field_name = "ASN"
 
         ## Extract optional config parameters from the configuration if present
@@ -103,6 +109,7 @@ class NetboxAsnManager(object):
                     scope=self.asn_pools_spec[var_params]["scope"],
                     asn_range=self.asn_pools_spec[var_params]["range"],
                     custom_field=self.netbox_custom_field_name,
+                    secure=self.netbox_secure
                 )
 
             except Exception as err:
