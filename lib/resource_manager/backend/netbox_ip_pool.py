@@ -87,13 +87,14 @@ class NetboxIpPool(object):
 
             self.subnet.reserve(ip["address"], identifier=identifier)
 
-    def get(self, identifier=None, return_mask=True):
+    def get(self, identifier=None, return_mask=True, id=None):
         """
         Find the next available IP in the pool
+        Or if id is defined, get a specific IP in the pool
         """
         logger.debug("Will try to get an IP for %s" % identifier)
 
-        ip = self.subnet.get(identifier=identifier)
+        ip = self.subnet.get(identifier=identifier, id=id)
 
         if return_mask == True:
             return "%s/%s" % (ip, self.subnet.subnet.prefixlen)
