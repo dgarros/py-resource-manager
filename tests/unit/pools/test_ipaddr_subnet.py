@@ -20,6 +20,16 @@ class Test_Validate_get(unittest.TestCase):
         self.assertEqual(str(sub.get(identifier="second")), "10.0.0.2")
         self.assertEqual(str(sub.get(identifier="first")), "10.0.0.1")
 
+    def test_v4_with_id(self):
+        sub = IpAddressPool("10.0.0.0/24")
+
+        self.assertEqual(str(sub.get()), "10.0.0.1")
+        self.assertEqual(str(sub.get(id=1)), "10.0.0.1")
+        self.assertEqual(str(sub.get(id=4)), "10.0.0.4")
+        
+        self.assertEqual(str(sub.get(id=1, identifier="gateway")), "10.0.0.1")
+        self.assertFalse(sub.get(id=1))
+
     def test_v6_no_owner(self):
         sub = IpAddressPool("2620:135:6000::0/126")
 
@@ -37,8 +47,6 @@ class Test_Validate_get(unittest.TestCase):
         self.assertEqual(str(sub.get(identifier="first")), "2620:135:6000::1")
         self.assertEqual(str(sub.get(identifier="second")), "2620:135:6000::2")
         self.assertEqual(str(sub.get(identifier="first")), "2620:135:6000::1")
-
-    ## Add test, no more IP
 
 
 class Test_Validate_Reserve(unittest.TestCase):

@@ -2,8 +2,7 @@ import ipaddress
 import logging
 from collections import defaultdict, OrderedDict
 
-logger = logging.getLogger("prefixes")
-
+logger = logging.getLogger("resource-manager")
 
 class PrefixesPool(object):
     """
