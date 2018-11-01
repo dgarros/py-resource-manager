@@ -28,6 +28,10 @@ class IpAddressPool(object):
         Return the IP previously allocated if one already exist
         """
 
+        if id and not isinstance(id, int):
+            logger.warning("Id (%s) must be an integer ... ignoring" % (id))
+            id = None
+
         ### If an identifier is provided, check if an IP was already allocated
         if identifier and identifier in self.ips_by_identifier.keys():
             ip_id = int(self.ips_by_identifier[identifier])
