@@ -96,7 +96,7 @@ class NetboxIpPool(object):
 
         ip = self.subnet.get(identifier=identifier, id=id)
 
-        if return_mask == True:
+        if ip and return_mask == True:
             return "%s/%s" % (ip, self.subnet.subnet.prefixlen)
         else:
             return ip
