@@ -1,0 +1,49 @@
+
+{ 
+    "params": "offset=0&limit=500&parent=10.10.0.0%2f30",
+    "response": {
+        "count": 1,
+        "next": null,
+        "previous": null,
+        "results": [
+            {
+                "id": 1,
+                "family": 4,
+                "address": "10.10.0.2/30",
+                "vrf": null,
+                "tenant": null,
+                "status": {
+                    "value": 1,
+                    "label": "Active"
+                },
+                "role": {
+                    "value": 40,
+                    "label": "VIP"
+                },
+                "interface": {
+                    "id": 12,
+                    "device": {
+                        "id": 13,
+                        "name": "lb1",
+                        "display_name": "lb1"
+                    },
+                    "name": "int1",
+                    "form_factor": {
+                        "value": 0,
+                        "label": "Virtual"
+                    },
+                    "enabled": true,
+                    "lag": null,
+                    "mtu": null,
+                    "mac_address": null,
+                    "mgmt_only": false,
+                    "description": "",
+                    "is_connected": false,
+                    "interface_connection": null,
+                    "circuit_termination": null
+                },
+                "description": ""
+            }
+        ]
+    }
+}

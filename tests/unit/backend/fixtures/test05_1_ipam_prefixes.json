@@ -1,0 +1,49 @@
+
+{ 
+    "params": "offset=0&limit=500&role=loopback&family=4&status=1&site=test",
+    "response": {
+        "count": 1,
+        "next": null,
+        "previous": null,
+        "results": [
+            {
+                "id": 1,
+                "family": 4,
+                "prefix": "10.10.0.0/30",
+                "site": {
+                    "id": 1,
+                    "slug": "test"
+                },
+                "status": {
+                    "value": 0,
+                    "label": "Active"
+                },
+                "role": {
+                    "id": 1,
+                    "slug": "loopback"
+                },
+                "is_pool": false,
+                "description": ""
+            },
+            {
+                "id": 2,
+                "family": 4,
+                "prefix": "10.10.1.0/30",
+                "site": {
+                    "id": 1,
+                    "slug": "test"
+                },
+                "status": {
+                    "value": 0,
+                    "label": "Active"
+                },
+                "role": {
+                    "id": 1,
+                    "slug": "loopback"
+                },
+                "is_pool": false,
+                "description": ""
+            }
+        ]
+    }
+}
