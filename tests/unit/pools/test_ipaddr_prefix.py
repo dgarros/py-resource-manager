@@ -104,21 +104,11 @@ class Test_Validate_Get_Subnet(unittest.TestCase):
     def test_v4_with_owner(self):
         sub = PrefixesPool("192.168.0.0/16")
 
-        self.assertEqual(
-            str(sub.get(size=24, identifier="first")), "192.168.0.0/24"
-        )
-        self.assertEqual(
-            str(sub.get(size=25, identifier="second")), "192.168.1.0/25"
-        )
-        self.assertEqual(
-            str(sub.get(size=17, identifier="third")), "192.168.128.0/17"
-        )
-        self.assertEqual(
-            str(sub.get(size=25, identifier="second")), "192.168.1.0/25"
-        )
-        self.assertEqual(
-            str(sub.get(size=17, identifier="third")), "192.168.128.0/17"
-        )
+        self.assertEqual(str(sub.get(size=24, identifier="first")), "192.168.0.0/24")
+        self.assertEqual(str(sub.get(size=25, identifier="second")), "192.168.1.0/25")
+        self.assertEqual(str(sub.get(size=17, identifier="third")), "192.168.128.0/17")
+        self.assertEqual(str(sub.get(size=25, identifier="second")), "192.168.1.0/25")
+        self.assertEqual(str(sub.get(size=17, identifier="third")), "192.168.128.0/17")
 
     def test_no_more_subnet(self):
         sub = PrefixesPool("192.0.0.0/22")
@@ -139,12 +129,8 @@ class Test_Validate_Check_if_Already_Reserved(unittest.TestCase):
     def test_v4_no_owner(self):
         sub = PrefixesPool("192.168.0.0/16")
 
-        self.assertEqual(
-            str(sub.get(size=24, identifier="first")), "192.168.0.0/24"
-        )
-        self.assertEqual(
-            str(sub.get(size=24, identifier="second")), "192.168.1.0/24"
-        )
+        self.assertEqual(str(sub.get(size=24, identifier="first")), "192.168.0.0/24")
+        self.assertEqual(str(sub.get(size=24, identifier="second")), "192.168.1.0/24")
 
         self.assertTrue(sub.check_if_already_allocated(identifier="second"))
         self.assertFalse(sub.check_if_already_allocated(identifier="third"))

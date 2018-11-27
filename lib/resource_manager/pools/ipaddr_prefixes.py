@@ -4,6 +4,7 @@ from collections import defaultdict, OrderedDict
 
 logger = logging.getLogger("resource-manager")
 
+
 class PrefixesPool(object):
     """
     Class to automatically manage Prefixes and help to carve out sub-prefixes

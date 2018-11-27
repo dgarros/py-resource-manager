@@ -8,9 +8,8 @@ from resource_manager.pools.ipaddr_subnet import IpAddressPool
 
 
 class Test_Validate_Get(unittest.TestCase):
-
     def test_nbr_address(self):
-        
+
         sub1 = IpAddressPool("10.0.0.0/24")
         sub2 = IpAddressPool("10.0.0.0/30")
         sub3 = IpAddressPool("10.0.0.0/31")
@@ -27,10 +26,8 @@ class Test_Validate_Get(unittest.TestCase):
         self.assertEqual(sub5.num_addresses, 2)
         self.assertEqual(sub6.num_addresses, 2)
 
-
     def test_v4_no_owner(self):
         sub = IpAddressPool("10.0.0.0/30")
-
 
         self.assertEqual(str(sub.get()), "10.0.0.1")
         self.assertEqual(str(sub.get()), "10.0.0.2")
@@ -47,7 +44,7 @@ class Test_Validate_Get(unittest.TestCase):
         self.assertEqual(str(sub.get()), "10.0.0.1")
         self.assertEqual(str(sub.get(id=1)), "10.0.0.1")
         self.assertEqual(str(sub.get(id=4)), "10.0.0.4")
-        
+
         self.assertEqual(str(sub.get(id=1, identifier="gateway")), "10.0.0.1")
         self.assertFalse(sub.get(id=1))
 
@@ -71,8 +68,10 @@ class Test_Validate_Get(unittest.TestCase):
 
     def test_only_if_exist(self):
         sub = IpAddressPool("10.0.0.0/24")
-        self.assertEqual(str(sub.get(identifier="first")),  "10.0.0.1")
-        self.assertEqual(str(sub.get(identifier="first", only_if_exist=True)),  "10.0.0.1")
+        self.assertEqual(str(sub.get(identifier="first")), "10.0.0.1")
+        self.assertEqual(
+            str(sub.get(identifier="first", only_if_exist=True)), "10.0.0.1"
+        )
         self.assertEqual(sub.get(identifier="second", only_if_exist=True), False)
 
 
@@ -89,6 +88,7 @@ class Test_Validate_Reserve(unittest.TestCase):
         self.assertEqual(sub.reserve("10.0.0.1", identifier="first"), True)
         self.assertEqual(str(sub.get(identifier="first")), "10.0.0.1")
 
+
 class Test_Validate_Outofrange(unittest.TestCase):
     def test_no_more_ip(self):
         sub = IpAddressPool("10.0.0.0/30")
@@ -97,7 +97,7 @@ class Test_Validate_Outofrange(unittest.TestCase):
         self.assertEqual(str(sub.get()), "10.0.0.2")
         self.assertIsNone(sub.get())
         self.assertIsNone(sub.get())
- 
+
 
 def main():
     unittest.main()

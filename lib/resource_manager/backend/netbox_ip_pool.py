@@ -27,6 +27,7 @@ class NetboxIpPool(object):
 
         if not secure:
             from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
             requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
         self.nb = requests.session()
@@ -68,12 +69,12 @@ class NetboxIpPool(object):
         """
         logger.debug("Will try to get an IP for %s" % identifier)
 
-        ### If identifier is defined, 
+        ### If identifier is defined,
         ### first check on all subnets if this identifier already has an Ip reserved
         ### if not, pick the next available Ips
         if identifier:
             for subnet in self.subnets:
-                ip =  subnet.get(identifier=identifier, id=id, only_if_exist=True)
+                ip = subnet.get(identifier=identifier, id=id, only_if_exist=True)
 
                 if ip and return_mask:
                     return "%s/%s" % (ip, subnet.subnet.prefixlen)
@@ -99,11 +100,8 @@ class NetboxIpPool(object):
         )
 
         resp = self._get_list_prefix_from_netbox(
-                                        site=self.site_name, 
-                                        role=self.role, 
-                                        family=self.ip_family, 
-                                        status=1
-                                    )
+            site=self.site_name, role=self.role, family=self.ip_family, status=1
+        )
 
         if resp["count"] == 0:
             raise Exception(
@@ -112,8 +110,8 @@ class NetboxIpPool(object):
 
         for result in resp["results"]:
             if self.description and result["description"] != self.description:
-                continue            
-            self._add_prefix(result['prefix'])
+                continue
+            self._add_prefix(result["prefix"])
 
         if self.subnets == []:
             raise Exception(
@@ -122,10 +120,9 @@ class NetboxIpPool(object):
 
         return True
 
-
     def _add_prefix(self, prefix):
 
-        ### 
+        ###
         pool = IpAddressPool(prefix)
 
         ### Get the list of existing IPs in Netbox
@@ -152,7 +149,6 @@ class NetboxIpPool(object):
         self.subnets.append(pool)
 
         return True
-
 
     def _get_all_ips_per_prefix(self, prefix):
 
