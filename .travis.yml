@@ -12,10 +12,12 @@ matrix:
       sudo: true
 
 install:
-  - "pip install -r requirements.txt"
   - "pip install --upgrade pip"
+  - "pip install -r requirements.txt"
+  - "pip install black"
   - "pip list"
   - "python setup.py develop"
   
 script:
   - make test
+  - black --check .
