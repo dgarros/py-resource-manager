@@ -14,18 +14,26 @@ class IpAddressPool(object):
 
     def __init__(self, subnet):
         self.subnet = ipaddress.ip_network(subnet)
-        self.num_addresses = self.subnet.num_addresses
+
+        if ((self.subnet.version == 4 and self.subnet.prefixlen == 31) or 
+            (self.subnet.version == 6 and self.subnet.prefixlen == 127)):
+            self.num_addresses = self.subnet.num_addresses 
+        else:
+            self.num_addresses = self.subnet.num_addresses - 2
+        
         self.nwk_int = int(self.subnet[0])
-        self.padding = "{:0%s}" % len(str(self.num_addresses))
+        self.padding = "{:0%s}" % (len(str(1000))+1)
         self.ips_by_id = {}
         self.ips_by_identifier = {}
 
-    def get(self, identifier=None, id=None):
+    def get(self, identifier=None, id=None, only_if_exist=False):
         """
         Get an IP from the Subnet
         Return the next one if no Ip is already associated with this label
-        If Id is provided, reserve and return the appropriate ID
+        If Id is provided, reserve and return the appropriate Id
         Return the IP previously allocated if one already exist
+        if only_if_exist is defined, 
+            a new IP will not be created but it will return an existing IP associated with the identifier
         """
 
         ### If an identifier is provided, check if an IP was already allocated
@@ -39,7 +47,10 @@ class IpAddressPool(object):
 
             return self.subnet[ip_id]
 
-        ### If id is provided, pick this IP       
+        if only_if_exist:
+            return False
+
+        ### If id is provided, pick this IP
         if id:
             id2str = self.padding.format(id)
 
@@ -64,7 +75,7 @@ class IpAddressPool(object):
             return self.subnet[id]
             
         ### If no IP were allocated, pick the next one
-        for ip_id in range(1, self.num_addresses):
+        for ip_id in range(1, self.num_addresses+1):
             id2str = self.padding.format(ip_id)
 
             if id2str in self.ips_by_id.keys():
@@ -99,3 +110,5 @@ class IpAddressPool(object):
             self.ips_by_id[ip_id] = True
 
         return True
+
+    
