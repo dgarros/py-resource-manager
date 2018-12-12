@@ -109,7 +109,7 @@ class NetboxAsnManager(object):
                     scope=self.asn_pools_spec[var_params]["scope"],
                     asn_range=self.asn_pools_spec[var_params]["range"],
                     custom_field=self.netbox_custom_field_name,
-                    secure=self.netbox_secure
+                    secure=self.netbox_secure,
                 )
 
             except Exception as err:

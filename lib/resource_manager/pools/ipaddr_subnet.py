@@ -3,6 +3,7 @@ import logging
 
 logger = logging.getLogger("resource-manager")
 
+
 class IpAddressPool(object):
     """
     This class manage the ip address allocation in a subnet
@@ -15,14 +16,15 @@ class IpAddressPool(object):
     def __init__(self, subnet):
         self.subnet = ipaddress.ip_network(subnet)
 
-        if ((self.subnet.version == 4 and self.subnet.prefixlen == 31) or 
-            (self.subnet.version == 6 and self.subnet.prefixlen == 127)):
-            self.num_addresses = self.subnet.num_addresses 
+        if (self.subnet.version == 4 and self.subnet.prefixlen == 31) or (
+            self.subnet.version == 6 and self.subnet.prefixlen == 127
+        ):
+            self.num_addresses = self.subnet.num_addresses
         else:
             self.num_addresses = self.subnet.num_addresses - 2
-        
+
         self.nwk_int = int(self.subnet[0])
-        self.padding = "{:0%s}" % (len(str(1000))+1)
+        self.padding = "{:0%s}" % (len(str(1000)) + 1)
         self.ips_by_id = {}
         self.ips_by_identifier = {}
 
@@ -43,7 +45,10 @@ class IpAddressPool(object):
             ##TODO When Id is provided, Add logic to check if previously
             ## reserved IP matches the ID
             if id and id != ip_id:
-                logger.warning("There is already an IP reserved for the identifier %s, can't provided Ip id %s as requested" % (identifier, id))
+                logger.warning(
+                    "There is already an IP reserved for the identifier %s, can't provided Ip id %s as requested"
+                    % (identifier, id)
+                )
 
             return self.subnet[ip_id]
 
@@ -55,15 +60,23 @@ class IpAddressPool(object):
             id2str = self.padding.format(id)
 
             ## Check if this IP is already reserved with an Identifier
-            if (id2str in self.ips_by_id.keys() and isinstance(self.ips_by_id[id2str], str)):
+            if id2str in self.ips_by_id.keys() and isinstance(
+                self.ips_by_id[id2str], str
+            ):
                 if identifier and self.ips_by_id[id2str] == identifier:
                     return self.subnet[id]
 
                 elif identifier and self.ips_by_id[id2str] != identifier:
-                    logger.warning("The Ip with id %s is already reserved under a different Identifier (%s / %s) " % (id, identifier, self.ips_by_id[id2str]))
+                    logger.warning(
+                        "The Ip with id %s is already reserved under a different Identifier (%s / %s) "
+                        % (id, identifier, self.ips_by_id[id2str])
+                    )
                     return False
                 elif not identifier:
-                    logger.warning("The Ip with id %s is already reserved with the Identifier (%s) " % (id, self.ips_by_id[id2str]))
+                    logger.warning(
+                        "The Ip with id %s is already reserved with the Identifier (%s) "
+                        % (id, self.ips_by_id[id2str])
+                    )
                     return False
 
             if identifier:
@@ -73,9 +86,9 @@ class IpAddressPool(object):
                 self.ips_by_id[id2str] = True
 
             return self.subnet[id]
-            
+
         ### If no IP were allocated, pick the next one
-        for ip_id in range(1, self.num_addresses+1):
+        for ip_id in range(1, self.num_addresses + 1):
             id2str = self.padding.format(ip_id)
 
             if id2str in self.ips_by_id.keys():
@@ -88,7 +101,6 @@ class IpAddressPool(object):
                 self.ips_by_id[id2str] = True
 
             return self.subnet[ip_id]
-
 
     def reserve(self, ip_address, identifier=None):
         """
@@ -110,5 +122,3 @@ class IpAddressPool(object):
             self.ips_by_id[ip_id] = True
 
         return True
-
-    
