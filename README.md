@@ -7,15 +7,13 @@
 
 # Resource Manager
 
-The Resource Manager is a library of python classes that can be use to manage resource allocation from different type of resources.
+The goal of the resource manager is to help manage different pool of resources (Ip, list, etc.) with the same approach as DHCP. 
+The resource manager will keep track of how the resources have been allocated and it will be able to provide an idempotent interface. If the same device request the same resource multiple time, it will always receive the same result. (think DHCP)
 
-The type of resource supported today are:
-- Integer
-- List 
-- Ipddresses
-- Prefixes
-
-The main classes are designed to work in memory and 
+This project is composed of multiple groups of libraries
+- Resource specific pool manager integrated with some backend (ex: ASN in Nebox)
+- Native pool manager to manage primary resources (ex: Integer, List, IP, Prefix)
+- Resource Manager to provide a single entry point to ask for a resource using a unified variable system. (not available yet)
 
 # Installation
 
@@ -26,11 +24,10 @@ python setup.py develop
 
 # Usage
 
-Currently the project doesn't have good examples, please refer to the unit tests.
+Please refer to the unit tests or reach out using the Github issue if you have questions
 
 # Todo 
 
-- Add support for XX
-- Resource Manager
-- 
+- Add Resource Manager
+- Add examples
 
